@@ -1,0 +1,101 @@
+# Тестовый стенд I: Multi-agent + 3-shot RAG + граф + Haiku
+#
+# Запуск:  docker compose -f docker-compose.stand-i.yml up -d --build
+# Стоп:   docker compose -f docker-compose.stand-i.yml down
+#
+# Предусловие: docker compose -f docker-compose.shared.yml уже запущен
+#
+# Параметры тестирования передаются в теле API-запроса:
+#   POST http://localhost:8080/api/tasks
+#   {"requirement": "...", "agent_mode": "multi", "use_rag": true, "rag_top_k": 3, "use_graph": true}
+
+services:
+  multiagent-i:
+    build:
+      context: ./multiagent
+      dockerfile: Dockerfile
+    container_name: hyp-i-multiagent
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_API_BASE: ${OPENAI_API_BASE:-https://openrouter.ai/api/v1}
+      OPENAI_MODEL: ${OPENAI_MODEL:-anthropic/claude-haiku-4.5}
+      OLLAMA_DEFAULT_MODEL: ${OLLAMA_DEFAULT_MODEL:-qwen2.5-coder:14b}
+      RAG_DEVICE: cpu
+      ORCHESTRATOR_MODEL: ${ORCHESTRATOR_MODEL:-}
+      CODER_MODEL: ${CODER_MODEL:-}
+      EXPLORER_MODEL: ${EXPLORER_MODEL:-}
+      FIX_MODEL: ${FIX_MODEL:-}
+      ORCHESTRATOR_API_BASE: ${ORCHESTRATOR_API_BASE:-}
+      ORCHESTRATOR_API_KEY: ${ORCHESTRATOR_API_KEY:-}
+      CODER_API_BASE: ${CODER_API_BASE:-}
+      CODER_API_KEY: ${CODER_API_KEY:-}
+      EXPLORER_API_BASE: ${EXPLORER_API_BASE:-}
+      EXPLORER_API_KEY: ${EXPLORER_API_KEY:-}
+      FIX_API_BASE: ${FIX_API_BASE:-}
+      FIX_API_KEY: ${FIX_API_KEY:-}
+      DATABASE_URL: postgresql://postgres:postgres@hyp-postgres:5432/contextstore_i
+      DOTNET_APP_URL: http://hyp-i-dotnet-app:5000
+      DOTNET_CODE_PATH: /app/code
+      ENABLE_METRICS: "true"
+      METRICS_PORT: 8000
+      LOG_LEVEL: INFO
+      LOG_FORMAT: json
+      ENABLE_CONTENT_LOGGING: "true"
+      USE_DOCKER_EXEC: "true"
+      DOTNET_CONTAINER_NAME: "hyp-i-dotnet-app"
+      DOTNET_LOGS_PATH: /app/dotnet-logs
+      RAG_SERVICE_URL: http://hyp-rag-service:8100
+      RAG_SERVICE_TIMEOUT: "30"
+      RAG_SERVICE_ENABLED: "true"
+      RAG_SERVICE_TOP_K: "3"
+      ROSLYN_ANALYZER_ENABLED: "true"
+      ENABLE_INSTANT_LINT: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    volumes:
+      - ./test-stands/src-I:/app/code:rw
+      - ./volumes/hypothesis-logs/stand-I/workspace:/app/workspace:rw
+      - ./volumes/hypothesis-logs/stand-I/agents:/app/logs:rw
+      - ./volumes/hypothesis-logs/stand-I/dotnet:/app/dotnet-logs:ro
+      - /var/run/docker.sock:/var/run/docker.sock:rw
+      - ./history_cases:/app/history_cases:rw
+    networks:
+      - hyp-network
+    ports:
+      - "8080:8000"
+
+  dotnet-app-i:
+    build:
+      context: ./dotnet-app
+      dockerfile: Dockerfile
+    container_name: hyp-i-dotnet-app
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:5000
+      BUILD_ON_START: "true"
+      Logging__LogLevel__Default: Debug
+      Logging__LogLevel__Microsoft: Information
+      Logging__LogLevel__System: Information
+    volumes:
+      - ./test-stands/src-I:/app/code:rw
+      - ./dotnet-app/local-nuget-packages:/root/.nuget/packages:ro
+      - ./volumes/hypothesis-logs/stand-I/dotnet:/app/logs:rw
+    networks:
+      - hyp-network
+    ports:
+      - "5009:5000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:5000/api/appconfig || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+
+networks:
+  hyp-network:
+    external: true
+    name: hyp-network

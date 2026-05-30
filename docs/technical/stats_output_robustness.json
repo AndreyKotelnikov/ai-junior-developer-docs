@@ -1,0 +1,83 @@
+{
+  "_meta": {
+    "n_observations": 675,
+    "source": "docs/experiment/test_results/stand-{A-I}-run-{1-5}.md",
+    "rng_seed": 42,
+    "n_bootstrap": 10000,
+    "cauchy_prior_r": 0.5,
+    "script": "docs/technical/compute_robustness_stats.py"
+  },
+  "h2b": {
+    "interaction_pp": 9.33,
+    "wilcoxon": {
+      "statistic": 14.0,
+      "p": 0.3105
+    },
+    "sign_test": {
+      "k_positive": 5,
+      "n_nonzero": 9,
+      "n": 15,
+      "p_one_sided": 0.5
+    },
+    "bayes_factor_10": 0.505,
+    "bayes_factor_label": "в пользу H0",
+    "bootstrap_ci_95": {
+      "lower": -8.0,
+      "upper": 26.67,
+      "threshold": 5.0
+    },
+    "bootstrap_prob": {
+      "p_interaction_gt_0": 0.845,
+      "p_interaction_gt_5": 0.692
+    },
+    "stratification": {
+      "simple": {
+        "mean_pp": -4.0,
+        "sign": "-"
+      },
+      "medium": {
+        "mean_pp": 8.0,
+        "sign": "+"
+      },
+      "complex": {
+        "mean_pp": 24.0,
+        "sign": "+"
+      }
+    },
+    "n_positive_strata": 2,
+    "margin_of_safety": {
+      "point_estimate_pp": 9.33,
+      "threshold_pp": 5.0,
+      "delta_pp": 4.33,
+      "sigma_pp": 36.15,
+      "delta_in_sigma": 0.12
+    }
+  },
+  "h4": {
+    "pass1_parity": 0.8485,
+    "tost": {
+      "ci_lower_one_sided_95": 0.6575,
+      "threshold": 0.75,
+      "verdict": "not_equivalent",
+      "established_noninferiority_bound": 0.65,
+      "p_parity_ge_threshold": 0.806,
+      "method": "bootstrap_approximation_n10000"
+    },
+    "bootstrap_ci_95_two_sided": {
+      "lower": 0.6216,
+      "upper": 1.12
+    },
+    "bayes_factor_10": 0.566,
+    "bayes_factor_label": "в пользу H0",
+    "triangulation": {
+      "pass1_parity": 0.8485,
+      "completeness_parity": 0.8256
+    },
+    "stratification": {
+      "simple": 0.92,
+      "medium": 0.8261,
+      "complex": 0.7778
+    },
+    "n_strata_above_threshold": 3
+  }
+}
